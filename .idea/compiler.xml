@@ -7,7 +7,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="service-user" />
+        <module name="web" />
         <module name="service-captcha" />
+        <module name="service-file" />
         <module name="server-eureka" />
       </profile>
     </annotationProcessing>
@@ -15,7 +17,9 @@
       <module name="doitserver" target="1.8" />
       <module name="server-eureka" target="1.8" />
       <module name="service-captcha" target="1.8" />
+      <module name="service-file" target="1.8" />
       <module name="service-user" target="1.8" />
+      <module name="web" target="1.8" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -23,7 +27,9 @@
       <module name="doitserver" options="-parameters" />
       <module name="server-eureka" options="-parameters" />
       <module name="service-captcha" options="-parameters" />
+      <module name="service-file" options="-parameters" />
       <module name="service-user" options="-parameters" />
+      <module name="web" options="-parameters" />
     </option>
   </component>
 </project>

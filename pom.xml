@@ -7,6 +7,7 @@
         <module>server-eureka</module>
         <module>service-user</module>
         <module>service-captcha</module>
+        <module>service-file</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
