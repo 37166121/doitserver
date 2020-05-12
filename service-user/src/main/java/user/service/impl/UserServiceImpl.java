@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public boolean isAdmin(String uid) {
+    public boolean isAdmin(int uid) {
         return userMapper.isAdmin(uid);
     }
 
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<UserPO> getAllUser(String uid) {
+    public List<UserPO> getAllUser(int uid) {
         return userMapper.getAllUser(uid);
     }
 
@@ -105,7 +105,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<UserPO> getAttentionUser(String uid) {
+    public List<UserPO> getAttentionUser(int uid) {
         return userMapper.getAttentionUser(uid);
     }
 
@@ -115,7 +115,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public List<String> getAttentionLabel(String uid) {
+    public List<String> getAttentionLabel(int uid) {
         return userMapper.getAttentionLabel(uid);
     }
 
@@ -125,23 +125,24 @@ public class UserServiceImpl implements UserService {
      * @param uid
      */
     @Override
-    public void setPassword(String password, String uid) {
+    public void setPassword(String password, int uid) {
         userMapper.setPassword(password, uid);
     }
 
     /**
      * 用户注册
      * @param uuid
+     * @param authority
+     * @param headuri
      * @param username
      * @param password
-     * @param qqNumber
+     * @param qq_number
      * @param phone
      * @param addtype
      * @param addtime
      */
     @Override
-    public void addUser(String uuid, String authority, String username, String password, String qqNumber, String phone, String addtype, String addtime) {
-        userMapper.addUser(uuid, authority, username, password, qqNumber, phone, addtype, addtime);
+    public void addUser(String uuid, String authority, String headuri, String username, String password, String qq_number, String phone, String addtype, String addtime) {
+        userMapper.addUser(uuid, authority, headuri, username, password, qq_number, phone, addtype, addtime);
     }
-
 }

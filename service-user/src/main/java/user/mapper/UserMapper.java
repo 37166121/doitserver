@@ -60,14 +60,14 @@ public interface UserMapper {
      * @return
      */
     @Select("SELECT (SELECT authority FROM doit_user WHERE uid = #{uid}) <=> 'admin'")
-    boolean isAdmin(@Param("uid") String uid);
+    boolean isAdmin(@Param("uid") int uid);
 
     /**
      * 获取所有用户
      * 仅管理员访问
      */
     @Select("SELECT * FROM doit_user")
-    List<UserPO> getAllUser(@Param("uid") String uid);
+    List<UserPO> getAllUser(@Param("uid") int uid);
 
     /**
      * 获取当前用户关注的用户
@@ -75,15 +75,15 @@ public interface UserMapper {
      * @return
      */
     @Select("SELECT uid,username,head FROM doit_user WHERE uid IN (SELECT touid FROM doit_user_attention_user WHERE uid = #{uid})")
-    List<UserPO> getAttentionUser(@Param("uid") String uid);
+    List<UserPO> getAttentionUser(@Param("uid") int uid);
 
     /**
      * 获取当前用户关注的标签
      * @param uid 用户ID
      * @return
      */
-    @Select("SELECT title FROM doit_label WHERE id IN (SELECT id FROM doit_user_attention_label WHERE uid = #{uid})")
-    List<String> getAttentionLabel(@Param("uid") String uid);
+    @Select("SELECT title FROM doit_system_label WHERE id IN (SELECT id FROM doit_user_attention_label WHERE uid = #{uid})")
+    List<String> getAttentionLabel(@Param("uid") int uid);
 
     /**
      * 更改密码
@@ -91,7 +91,7 @@ public interface UserMapper {
      * @param uid
      */
     @Update("UPDATE doit_user set password = #{password} WHERE uid = #{uid}")
-    void setPassword(@Param("password") String password,@Param("uid") String uid);
+    void setPassword(@Param("password") String password,@Param("uid") int uid);
 
     /**
      * 用户注册
@@ -103,8 +103,10 @@ public interface UserMapper {
      * @param addtype
      * @param addtime
      */
-    @Insert("INSERT INTO doit_user(uuid,authority,username,password,qq_number,phone,addtype,addtime) VALUES(#{uuid}," +
+    @Insert("INSERT INTO doit_user(uuid,authority,username,password,qq_number,phone,addtype,addtime) VALUES(" +
+            "#{uuid}," +
             "#{authority}," +
+            "#{headuri}," +
             "#{username}," +
             "#{password}," +
             "#{qq_number}," +
@@ -113,6 +115,7 @@ public interface UserMapper {
             "#{addtime})")
     void addUser(@Param("uuid") String uuid,
                  @Param("authority") String authority,
+                 @Param("headuri") String headuri,
                  @Param("username") String username,
                  @Param("password") String password,
                  @Param("qq_number") String qq_number,

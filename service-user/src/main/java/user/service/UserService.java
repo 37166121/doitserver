@@ -17,11 +17,11 @@ public interface UserService {
     void logoutApp(String timestamp);
     void loginWeb(String timestamp, String ip);
     void logoutWeb(String timestamp);
-    boolean isAdmin(String uid);
-    List<UserPO> getAllUser(String uid);
+    boolean isAdmin(int uid);
+    List<UserPO> getAllUser(int uid);
     UserPO getUser(String phone, String pwd);
-    List<UserPO> getAttentionUser(String uid);
-    List<String> getAttentionLabel(String uid);
-    void setPassword(String password,String uid);
-    void addUser(String uuid,String authority,String username,String password,String qq_number,String phone,String addtype,String addtime);
+    List<UserPO> getAttentionUser(int uid);
+    List<String> getAttentionLabel(int uid);
+    void setPassword(String password,int uid);
+    void addUser(String uuid,String authority,String headuri,String username,String password,String qq_number,String phone,String addtype,String addtime);
 }

@@ -13,6 +13,7 @@ import user.util.MD5Util;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -81,11 +82,8 @@ public class UserController {
      * 鉴权
      * @return
      */
-    @RequestMapping(value = "/isAdmin", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-    public JSONObject isAdmin(HttpServletRequest request, HttpServletResponse response){
-        getJSONObject(request, response);
-
-        return jsonObject;
+    public boolean isAdmin(int uid){
+        return userService.isAdmin(uid);
     }
 
     /**
@@ -98,9 +96,11 @@ public class UserController {
     @RequestMapping(value = "/getAllUser", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public JSONObject getAllUser(HttpServletRequest request, HttpServletResponse response){
         getJSONObject(request, response);
-        List<UserPO> userPoList = userService.getAllUser(jsonObject.getString("uid"));
-        jsonObject = new JSONObject();
-        jsonObject.put("userinfoList",userPoList);
+        if (isAdmin(jsonObject.getInteger("uid"))){
+            List<UserPO> userPoList = userService.getAllUser(jsonObject.getInteger("uid"));
+            jsonObject = new JSONObject();
+            jsonObject.put("userinfoList",userPoList);
+        }
         return jsonObject;
     }
 
@@ -110,28 +110,42 @@ public class UserController {
     @RequestMapping(value = "/setPassword", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public void setPassword(HttpServletRequest request, HttpServletResponse response){
         getJSONObject(request, response);
-        userService.setPassword(jsonObject.getString("password"),jsonObject.getString("uid"));
+        userService.setPassword(jsonObject.getString("password"),jsonObject.getInteger("uid"));
     }
 
     /**
      * 用户注册
      */
     @RequestMapping(value = "/addUser", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-    public void addUser(HttpServletRequest request, HttpServletResponse response){
+    public JSONObject addUser(HttpServletRequest request, HttpServletResponse response){
         getJSONObject(request, response);
         Date date = new Date();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println(md5Util.crypt(jsonObject.getString("password")));
+        //头像uri：#{uid}/head/XXXXXXX.jpg
+        String headuri = "static\\media\\" + jsonObject.getInteger("uid") + "\\head";
+        File dir = new File(headuri);
+        JSONObject json = new JSONObject();
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                json.put("msg","创建目录" + dir.getPath() + "失败");
+                return json;
+            }
+            System.out.println("创建目录" + dir.getPath() + "成功");
+            return json;
+        } else {
+            json.put("msg","创建目录" + dir.getPath() + "失败，目标目录已经存在");
+        }
         userService.addUser(jsonObject.getString("uuid"),
                 "user",
+                headuri,
                 jsonObject.getString("username"),
                 md5Util.crypt(jsonObject.getString("password")),
                 jsonObject.getString("qqNumber"),
                 jsonObject.getString("phone"),
                 jsonObject.getString("addtype"),
                 formatter.format(date));
+        return json;
     }
-
     /**
      * 解析客户端JSON
      * @param request
