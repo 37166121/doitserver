@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="web" />
         <module name="service-user" />
+        <module name="service-ad" />
         <module name="server-eureka" />
         <module name="service-file" />
         <module name="service-captcha" />
@@ -19,6 +20,7 @@
       <module name="doitserver" target="1.8" />
       <module name="server-eureka" target="1.8" />
       <module name="server-socket" target="1.8" />
+      <module name="service-ad" target="1.8" />
       <module name="service-captcha" target="1.8" />
       <module name="service-file" target="1.8" />
       <module name="service-user" target="1.8" />
@@ -31,6 +33,7 @@
       <module name="doitserver" options="-parameters" />
       <module name="server-eureka" options="-parameters" />
       <module name="server-socket" options="-parameters" />
+      <module name="service-ad" options="-parameters" />
       <module name="service-captcha" options="-parameters" />
       <module name="service-file" options="-parameters" />
       <module name="service-user" options="-parameters" />
