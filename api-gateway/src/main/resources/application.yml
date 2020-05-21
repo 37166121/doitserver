@@ -1,0 +1,22 @@
+server:
+  port: 18888
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user
+          uri: http://localhost:7100/user/{path}
+          predicates:
+            - Path=/user/{path}
+        - id: file
+          uri: http://localhost:7200/file/{path}
+          predicates:
+            - Path=/file/{path}

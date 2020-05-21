@@ -11,6 +11,7 @@ import com.aliyuncs.http.MethodType;
 import com.aliyuncs.profile.DefaultProfile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.server.ErrorPage;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.apache.http.auth.AuthProtocolState.FAILURE;
@@ -38,25 +40,10 @@ import static org.apache.http.auth.AuthProtocolState.SUCCESS;
 public class CaptchaController {
     @Autowired
     CaptchaService captchaService;
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
-    private static String AK = null;
-    private static String AS = null;
-    private static String SMSCODE = null;
     private static JSONObject json = new JSONObject();
-
-    public Map<String,String> getMap(HttpServletRequest request, HttpServletResponse response){
-        HttpSession session = request.getSession();
-        Map<String,String> map = new HashMap<>();
-        if (session.getAttribute("map") != null){
-            map = (HashMap<String,String>)session.getAttribute("map");
-        }
-        return map;
-    }
-    public void setMap(Map<String,String> map, HttpServletRequest request, HttpServletResponse response){
-        HttpSession session = request.getSession();
-        session.setAttribute("map", map);
-        System.out.println("map.size()：" + map.size());
-    }
 
     /**
      * 获取短信验证码
@@ -68,32 +55,37 @@ public class CaptchaController {
     @RequestMapping(value = "/sendSms/{phone}")
     private JSONObject getCaptcha(@PathVariable String phone, HttpServletRequest request, HttpServletResponse response){
         if (captchaService.isPhonePresence(phone)) {
-            AK = captchaService.getAK();
-            AS = captchaService.getAS();
-            SMSCODE = captchaService.getSmsCode();
-            SendSms sendSms = new SendSms(phone,getMap(request, response),request,response);
+            SendSms sendSms = new SendSms(redisTemplate,captchaService,phone,request,response);
             sendSms.sendSms();
         }
         json = new JSONObject();
         json.put("msg",SUCCESS);
         return json;
     }
+
+    /**
+     * 实现获取短信验证码并保存到redis
+     */
     public static class SendSms {
         private final String phone;
-        private Map<String,String> map = new HashMap<>();
         private HttpServletRequest request;
         private HttpServletResponse response;
-        SendSms(String phone,Map<String,String> map,HttpServletRequest request, HttpServletResponse response){
+        private CaptchaService captchaService;
+        private StringRedisTemplate redisTemplate;
+        SendSms(StringRedisTemplate redisTemplate,CaptchaService captchaService,String phone,
+                HttpServletRequest request, HttpServletResponse response){
+            this.redisTemplate = redisTemplate;
+            this.captchaService = captchaService;
             this.phone = phone;
-            this.map = map;
             this.request = request;
             this.response = response;
         }
         public void sendSms() {
-            DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", AK, AS);
+            DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", captchaService.getAK(), captchaService.getAS());
             IAcsClient client = new DefaultAcsClient(profile);
             CommonRequest request = new CommonRequest();
             String sendSms = String.format("%04d",new Random().nextInt(9999));
+                String smsCode = captchaService.getSmsCode();
             request.setMethod(MethodType.POST);
             request.setDomain("dysmsapi.aliyuncs.com");
             request.setVersion("2017-05-25");
@@ -101,10 +93,9 @@ public class CaptchaController {
             request.putQueryParameter("RegionId", "cn-hangzhou");
             request.putQueryParameter("PhoneNumbers", phone);
             request.putQueryParameter("SignName", "Doit");
-            request.putQueryParameter("TemplateCode", SMSCODE);
+            request.putQueryParameter("TemplateCode", smsCode);
             request.putQueryParameter("TemplateParam", "{\"code\":\"" + sendSms + "\"}");
-            map.put(phone,sendSms);
-            new CaptchaController().setMap(map,this.request,response);
+            redisTemplate.opsForValue().set(phone, sendSms);
             try {
                 CommonResponse response = client.getCommonResponse(request);
                 System.out.println(response.getData());
@@ -112,6 +103,19 @@ public class CaptchaController {
                 e.printStackTrace();
             }
         }
+    }
+
+    @RequestMapping("set/{key}/{value}")
+    public String set(@PathVariable("key")String key,@PathVariable("value") String value) {
+        //注意这里的 key不能为null spring 内部有检验
+        redisTemplate.opsForValue().set(key, value);
+        return key + "," + value;
+    }
+
+    @RequestMapping("get/{key}")
+    public String get(@PathVariable("key") String key) {
+
+        return "key=" + key + ",value=" + redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -124,19 +128,15 @@ public class CaptchaController {
     @RequestMapping(value="/isCaptcha/{phone}/{code}")
     public JSONObject isCaptcha(@PathVariable String code, @PathVariable String phone,
                                 HttpServletRequest request, HttpServletResponse response){
-        Map<String,String> map = getMap(request, response);
-        if (map.size() == 0){
-            json.put("msg", FAILURE);
-            return json;
-        }
-        return isCode(map.get(phone).toUpperCase(),code.toUpperCase());
+        return isCode(Objects.requireNonNull(redisTemplate.opsForValue().get(phone)),code,phone);
     }
-    private JSONObject isCode(String oldCode, String code){
+    private JSONObject isCode(String oldCode, String code,String phone){
         if (!oldCode.equals(code)){
             json.put("msg", FAILURE);
             return json;
         }
         json.put("msg", SUCCESS);
+        redisTemplate.delete(phone);
         return json;
     }
 }

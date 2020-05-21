@@ -11,6 +11,7 @@
         <module>service-file</module>
         <module>service-zxing</module>
         <module>service-ad</module>
+        <module>api-gateway</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

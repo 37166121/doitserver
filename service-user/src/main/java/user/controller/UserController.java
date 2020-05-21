@@ -28,6 +28,7 @@ import java.util.*;
  * 2020/5/9 18:08
  **/
 @RestController
+@RequestMapping(value = "/user")
 public class UserController {
     MD5Util md5Util = new MD5Util();
     JSONObject jsonObject = new JSONObject();

@@ -31,6 +31,7 @@ import static org.apache.http.auth.AuthProtocolState.SUCCESS;
  * 2020/5/10 4:51
  **/
 @RestController
+@RequestMapping(value = "/file")
 public class FlicController {
     private JSONObject jsonObject;
     public static final String letterChar = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -117,7 +118,7 @@ public class FlicController {
      * @param request
      * @param response
      */
-    @RequestMapping(value = "/saveFile/head", method = RequestMethod.POST)
+    @RequestMapping(value = "/saveHead", method = RequestMethod.POST)
     private void getFileStream(HttpServletRequest request, HttpServletResponse response) {
         try {
             InputStream is = request.getInputStream();
