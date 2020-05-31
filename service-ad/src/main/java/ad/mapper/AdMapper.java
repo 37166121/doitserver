@@ -25,7 +25,7 @@ public interface AdMapper {
      * 是否展示广告
      * @return
      */
-    @Select("SELECT isshowad FROM doit_system_config")
+    @Select("SELECT showad_switch FROM doit_system_config")
     boolean isShowAd();
 
     /**

@@ -1,16 +1,17 @@
 package socket.controller;
 
-import com.alibaba.fastjson.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import socket.po.ResponseMessage;
+import org.springframework.web.socket.WebSocketSession;
+import socket.manager.WebSocketManager;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 
 /**
  * WebSocketController
@@ -19,30 +20,73 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version 1.0
  * 2020/5/12 19:20
  **/
+@Slf4j
 @RestController
 public class WebSocketController {
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
+    @Autowired
+    private SimpMessagingTemplate template;
 
-    // 收到消息记数
-    private AtomicInteger count = new AtomicInteger(0);
-//    @MessageMapping(GlobalConsts.HELLO_MAPPING)
-//    @SendTo(GlobalConsts.TOPIC)
-//    public ServerMessage greeting(ClientMessage message) throws Exception {
-//        // 模拟延时
-//        Thread.sleep(1000);
-//        return new ServerMessage("Hello, " + HtmlUtils.htmlEscape(message.getName()) + "!");
-//    }
-    @RequestMapping(value="/broadcast/index")
-    public String broadcastIndex(HttpServletRequest req){
-        System.out.println(req.getRemoteHost());
-        return "websocket/simple/ws-broadcast";
+    /**
+     * 服务器指定用户进行推送,需要前端开通 var socket = new SockJS(host+'/myUrl' + '?token=1234');
+     */
+    @RequestMapping("/sendUser")
+    public void sendUser(String token) {
+        log.info("token = {} ,对其发送您好", token);
+        WebSocketSession webSocketSession = WebSocketManager.get(token);
+        if (webSocketSession != null) {
+            /**
+             * 主要防止broken pipe
+             */
+            template.convertAndSendToUser(token, "/queue/sendUser", "您好");
+        }
+
     }
-    @MessageMapping("/receive")
-    @SendTo("/topic/getResponse")
-    public ResponseMessage  broadcast(RequestMapping requestMessage){
-        logger.info("receive message = {}" , JSONObject.toJSONString(requestMessage));
-        ResponseMessage responseMessage = new ResponseMessage ();
-        responseMessage.setResponseMessage("BroadcastCtl receive [" + count.incrementAndGet() + "] records");
-        return responseMessage;
+
+    /**
+     * 广播，服务器主动推给连接的客户端
+     */
+    @RequestMapping("/sendTopic")
+    public void sendTopic() {
+        template.convertAndSend("/topic/sendTopic", "大家晚上好");
+
+    }
+
+    /**
+     * 客户端发消息，服务端接收
+     *
+     * @param message
+     */
+    // 相当于RequestMapping
+    @MessageMapping("/sendServer")
+    public void sendServer(String message) {
+        log.info("message:{}", message);
+    }
+
+    /**
+     * 客户端发消息，大家都接收，相当于直播说话
+     *
+     * @param message
+     * @return
+     */
+    @MessageMapping("/sendAllUser")
+    @SendTo("/topic/sendTopic")
+    public String sendAllUser(String message) {
+        // 也可以采用template方式
+        return message;
+    }
+
+    /**
+     * 点对点用户聊天，这边需要注意，由于前端传过来json数据，所以使用@RequestBody
+     * 这边需要前端开通var socket = new SockJS(host+'/myUrl' + '?token=4567');   token为指定name
+     * @param map
+     */
+    @MessageMapping("/sendMyUser")
+    public void sendMyUser(@RequestBody Map<String, String> map) {
+        log.info("map = {}", map);
+        WebSocketSession webSocketSession = WebSocketManager.get(map.get("name"));
+        if (webSocketSession != null) {
+            log.info("sessionId = {}", webSocketSession.getId());
+            template.convertAndSendToUser(map.get("name"), "/queue/sendUser", map.get("message"));
+        }
     }
 }

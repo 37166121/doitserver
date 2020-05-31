@@ -20,7 +20,7 @@ import java.io.IOException;
  **/
 @RestController
 public class ZxingController {
-    @RequestMapping(value = "/getZxing/{content}")
+    @RequestMapping(value = "/login")
     public void getZxing(@PathVariable String content, @RequestParam(defaultValue = "300", required = false) int width, @RequestParam(defaultValue = "300", required = false) int height, HttpServletResponse response){
         ServletOutputStream outputStream = null;
         try {
